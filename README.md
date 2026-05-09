@@ -1,42 +1,38 @@
 # 📊 Academic Dashboard
 
-Sistema de visualización de datos académicos con arquitectura en capas.
-
-## Estructura del proyecto
-
-```
-├── backend/          ← API unificada (Express + TypeScript + PostgreSQL)
-└── dashboard-dwh/    ← Frontend (React + Vite + Recharts)
-```
+Sistema de visualización de datos académicos.
 
 ## 🚀 Cómo levantar
 
-Necesitas **2 terminales**:
-
-**Terminal 1 — Backend**
+### Primera vez — instalar todas las dependencias:
 ```bash
-cd backend
-npm install
-npm run dev
-# http://localhost:3000
+npm run install:all
 ```
 
-**Terminal 2 — Frontend**
+### Levantar todo con un solo comando:
 ```bash
-cd dashboard-dwh
-npm install
 npm run dev
-# http://localhost:5173
 ```
 
-Luego abre **http://localhost:5173** en el navegador.
+Esto inicia simultáneamente:
+- **Backend** → `http://localhost:3000`
+- **Frontend** → `http://localhost:5173`
+
+Abre `http://localhost:5173` en el navegador.
 
 ## Variables de entorno
 
-Copia `backend/.env.example` a `backend/.env` y completa:
-
+Crea el archivo `backend/.env` basándote en `backend/.env.example`:
 ```
 DATABASE_URL=postgresql://...
 PORT=3000
 NODE_ENV=development
+```
+
+## Estructura
+
+```
+├── package.json       ← Scripts raíz (npm run dev levanta todo)
+├── backend/           ← API Express + TypeScript + PostgreSQL
+└── dashboard-dwh/     ← Frontend React + Vite + Recharts
 ```
