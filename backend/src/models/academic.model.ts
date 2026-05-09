@@ -1,28 +1,33 @@
 export interface Estudiante {
   numero_documento: string;
+  tipo_documento: string;
   nombres: string;
   apellidos: string;
+  direccion: string;
   correo_institucional: string;
+  correo_personal: string;
+  telefono: string;
   semestre_actual: number;
 }
 
 export interface Asignatura {
   codigo_asignatura: string;
   nombre_asignatura: string;
+  semestre_plan: number;
   creditos: number;
 }
 
 export interface Curso {
-  id_curso: string;
+  id_curso: number;
   codigo_asignatura: string;
   periodo: string;
   docente_asignado: string;
 }
 
 export interface Matricula {
-  id_matricula: string;
+  id_matricula: number;
   numero_documento: string;
-  id_curso: string;
+  id_curso: number;
 }
 
 export interface Calificacion {

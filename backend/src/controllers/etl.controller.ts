@@ -4,7 +4,7 @@ import type { IDashboardData } from '../types/dashboard';
 
 /**
  * GET /api/etl/dashboard
- * Retorna todos los datos consolidados para el dashboard.
+ * Retorna los datos consolidados para el dashboard analítico.
  */
 export const getDashboardData = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -15,7 +15,6 @@ export const getDashboardData = async (req: Request, res: Response, next: NextFu
     ]);
 
     const data: IDashboardData = { libraryImpact, subjectPerformance, laboratoryUsage };
-
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -24,13 +23,10 @@ export const getDashboardData = async (req: Request, res: Response, next: NextFu
 
 /**
  * POST /api/etl/run
- * Punto de entrada para ejecutar el proceso ETL.
- * Por ahora refresca los datos en memoria; aquí se puede agregar
- * lógica de transformación y carga a tablas DWH en el futuro.
+ * Ejecuta el proceso ETL y valida la conectividad con la base de datos.
  */
 export const runEtl = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Ejecutar todas las queries analíticas para validar que la DB responde
     await Promise.all([
       etlRepository.getLibraryImpact(),
       etlRepository.getSubjectPerformance(),

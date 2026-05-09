@@ -24,9 +24,9 @@ export const getSubjectPerformance = async (): Promise<ISubjectPerformance[]> =>
 };
 
 /**
- * Impacto de asistencia en notas.
- * Usa la tabla `asistencia` para clasificar estudiantes por nivel de actividad
- * y correlaciona con su promedio de calificaciones.
+ * Correlación entre nivel de asistencia y promedio de notas.
+ * Clasifica a los estudiantes en Alta / Media / Baja / Sin actividad
+ * según su porcentaje de asistencia y calcula el promedio de notas por grupo.
  */
 export const getLibraryImpact = async (): Promise<ILibraryImpact[]> => {
   const result = await pool.query<ILibraryImpact>(`
@@ -55,8 +55,7 @@ export const getLibraryImpact = async (): Promise<ILibraryImpact[]> => {
 };
 
 /**
- * Uso por asignatura basado en horas de asistencia.
- * Usa la tabla `asistencia` agrupada por asignatura como proxy de uso.
+ * Asistencias registradas por asignatura (proxy de uso de recursos).
  */
 export const getLaboratoryUsage = async (): Promise<ILaboratoryUsage[]> => {
   const result = await pool.query<ILaboratoryUsage>(`

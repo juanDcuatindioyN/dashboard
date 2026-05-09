@@ -11,7 +11,7 @@ interface DashboardState {
     runEtl: () => Promise<void>;
 }
 
-const API_URL = 'http://localhost:3003/api/etl';
+const API_URL = 'http://localhost:3000/api/etl';
 
 export const useDashboardStore = create<DashboardState>((set) => ({
     dashboardData: null,

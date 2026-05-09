@@ -1,7 +1,7 @@
 {
-  "name": "dwh-api",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "ETL & DWH API for the academic dashboard",
+  "description": "Academic Record & DWH API",
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc",
