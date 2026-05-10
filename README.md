@@ -53,14 +53,18 @@ npm run install:all
 
 ### 2. Configurar variables de entorno
 
-Cada servicio tiene su propio `.env`. Copia el `.env.example` de cada carpeta y completa los valores:
+Ejecuta el script de setup — crea los `.env` a partir de los `.env.example`:
 
 ```bash
-cp academic-record/.env.example     academic-record/.env
-cp backend-library/.env.example     backend-library/.env
-cp backend-laboratories/.env.example backend-laboratories/.env
-cp core-dwh/.env.example            core-dwh/.env
+node setup.js
 ```
+
+Luego edita cada `.env` con las credenciales reales:
+
+- `academic-record/.env` → pon tu `DATABASE_URL` de Neon
+- `backend-library/.env` → pon tu `MONGODB_URI` de Atlas
+- `backend-laboratories/.env` → no necesita cambios
+- `core-dwh/.env` → pon tu `DATABASE_URL` de Neon (la misma que academic-record)
 
 ### 3. Levantar todo
 
