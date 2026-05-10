@@ -21,11 +21,18 @@ app.get('/health', (_req, res) => {
 
 app.use(errorHandler);
 
-connectMongo().then(() => {
-  app.listen(PORT, () => {
-    console.log(`[backend-library] running at http://localhost:${PORT}`);
-  });
-}).catch((err) => {
-  console.error('[backend-library] Failed to connect to MongoDB:', err.message);
-  process.exit(1);
+app.listen(PORT, () => {
+  console.log(`[backend-library] running at http://localhost:${PORT}`);
 });
+
+// Connect to MongoDB after server starts — retries every 5s if unavailable
+const connectWithRetry = async () => {
+  try {
+    await connectMongo();
+  } catch (err: any) {
+    console.error(`[backend-library] MongoDB connection failed: ${err.message}. Retrying in 5s...`);
+    setTimeout(connectWithRetry, 5000);
+  }
+};
+
+connectWithRetry();
