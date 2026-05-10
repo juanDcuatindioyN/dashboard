@@ -1,6 +1,6 @@
 export interface ILibraryImpact {
     nivelActividad: string;
-    promedioNotas: string | number; // Los datos numéricos procesados desde la DB pueden llegar como string
+    promedioNotas: string | number;
 }
 
 export interface ISubjectPerformance {
@@ -22,4 +22,12 @@ export interface IDashboardData {
 export interface IDashboardResponse {
     success: boolean;
     data: IDashboardData;
+}
+
+// Derived KPIs computed on the frontend
+export interface IKpis {
+    promedioGeneral: number;
+    totalAsignaturas: number;
+    asignaturasEnRiesgo: number;   // promedio < 3.5
+    asignaturasDestacadas: number; // promedio >= 4.0
 }

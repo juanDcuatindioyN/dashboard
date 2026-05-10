@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { ISubjectPerformance } from '../../types/dashboard';
 
 interface Props {
@@ -6,48 +6,51 @@ interface Props {
 }
 
 export const SubjectPerformanceChart = ({ data }: Props) => {
-    const formattedData = data.map(item => ({
-        ...item,
-        promedioNotas: Number(item.promedioNotas)
-    }));
+    const formatted = [...data]
+        .map(d => ({ ...d, promedioNotas: Number(d.promedioNotas) }))
+        .sort((a, b) => b.promedioNotas - a.promedioNotas);
 
     return (
-        <div className="w-full h-80 bg-surface rounded-xl p-4 shadow-sm border border-slate-800">
-            <h3 className="text-lg font-semibold text-text-main mb-4">Rendimiento por Asignatura</h3>
-            <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                    data={formattedData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                    <XAxis 
-                        dataKey="asignatura" 
-                        stroke="#94a3b8" 
-                        tick={{ fill: '#94a3b8', fontSize: 11 }}
+        <div className="bg-surface rounded-2xl p-5 border border-border">
+            <h3 className="text-base font-semibold text-text-main mb-1">Rendimiento por Asignatura</h3>
+            <p className="text-xs text-text-muted mb-4">Promedio de notas de todas las asignaturas del programa</p>
+            <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={formatted} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <defs>
+                        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#6366f1" />
+                            <stop offset="100%" stopColor="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2d45" vertical={false} />
+                    <XAxis
+                        dataKey="asignatura"
+                        tick={{ fill: '#64748b', fontSize: 10 }}
                         tickLine={false}
                         axisLine={false}
-                        tickFormatter={(value: string) => value.length > 10 ? `${value.substring(0, 10)}...` : value}
-                        height={30}
+                        tickFormatter={(v: string) => v.length > 8 ? v.slice(0, 8) + '…' : v}
+                        interval={2}
                     />
-                    <YAxis 
-                        stroke="#94a3b8" 
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
+                    <YAxis
+                        domain={[2.5, 5]}
+                        tick={{ fill: '#64748b', fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}
-                        domain={[0, 5]}
                     />
-                    <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', color: '#f8fafc' }}
-                        itemStyle={{ color: '#8b5cf6' }}
+                    <ReferenceLine y={3.5} stroke="#fbbf24" strokeDasharray="4 4"
+                        label={{ value: 'Riesgo 3.5', fill: '#fbbf24', fontSize: 10, position: 'insideTopRight' }}
                     />
-                    <Line 
-                        type="monotone" 
-                        dataKey="promedioNotas" 
-                        name="Promedio de Notas"
-                        stroke="#8b5cf6" 
-                        strokeWidth={3}
-                        dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 0 }}
-                        activeDot={{ r: 6, strokeWidth: 0 }}
+                    <Tooltip
+                        contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2d45', borderRadius: '10px', color: '#f1f5f9', fontSize: 12 }}
+                        formatter={(v: number) => [v.toFixed(2), 'Promedio']}
+                    />
+                    <Line
+                        type="monotone"
+                        dataKey="promedioNotas"
+                        stroke="url(#lineGrad)"
+                        strokeWidth={2.5}
+                        dot={false}
+                        activeDot={{ r: 5, fill: '#6366f1', strokeWidth: 0 }}
                     />
                 </LineChart>
             </ResponsiveContainer>
