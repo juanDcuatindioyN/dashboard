@@ -3,7 +3,6 @@ import { useDashboardStore } from '../store/useDashboardStore';
 import { KpiCards } from './KpiCards';
 import { TopSubjectsChart } from './charts/TopSubjectsChart';
 import { GradeDistributionChart } from './charts/GradeDistributionChart';
-import { AttendanceImpactChart } from './charts/AttendanceImpactChart';
 import { SubjectPerformanceChart } from './charts/SubjectPerformanceChart';
 import { SyncButton } from './SyncButton';
 import { AlertCircle, BarChart2 } from 'lucide-react';
@@ -101,11 +100,6 @@ export const DashboardView = () => {
 
                         {/* Distribución de notas */}
                         <GradeDistributionChart data={dashboardData.subjectPerformance} />
-
-                        {/* Asistencia vs rendimiento */}
-                        <div className="lg:col-span-2">
-                            <AttendanceImpactChart data={dashboardData.libraryImpact} />
-                        </div>
                     </div>
                 </>
             )}
