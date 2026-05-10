@@ -1,7 +1,7 @@
 {
-  "name": "backend",
+  "name": "core-dwh",
   "version": "1.0.0",
-  "description": "Academic Record & DWH API",
+  "description": "Orquestador ETL — cruza las 3 fuentes y expone el dashboard analítico",
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc",
@@ -9,7 +9,9 @@
     "dev": "nodemon --watch src/**/*.ts --exec ts-node src/app.ts"
   },
   "dependencies": {
+    "axios": "^1.9.0",
     "cors": "^2.8.6",
+    "csv-parse": "^5.6.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "pg": "^8.20.0"

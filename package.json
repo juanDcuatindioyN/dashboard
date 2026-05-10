@@ -1,11 +1,10 @@
 {
   "name": "academic-dashboard",
   "version": "1.0.0",
-  "description": "Academic Dashboard — monorepo (backend + frontend)",
+  "description": "Academic Dashboard — monorepo con 5 servicios",
   "scripts": {
-    "dev": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\" \"npm run dev --prefix backend\" \"npm run dev --prefix dashboard-dwh\"",
-    "build": "npm run build --prefix backend && npm run build --prefix dashboard-dwh",
-    "install:all": "npm install && npm install --prefix backend && npm install --prefix dashboard-dwh"
+    "dev": "concurrently --names \"ACADEMIC,LIBRARY,LABS,CORE,FRONTEND\" --prefix-colors \"blue,magenta,yellow,cyan,green\" \"npm run dev --prefix academic-record\" \"npm run dev --prefix backend-library\" \"npm run dev --prefix backend-laboratories\" \"npm run dev --prefix core-dwh\" \"npm run dev --prefix dashboard-dwh\"",
+    "install:all": "npm install && npm install --prefix academic-record && npm install --prefix backend-library && npm install --prefix backend-laboratories && npm install --prefix core-dwh && npm install --prefix dashboard-dwh"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

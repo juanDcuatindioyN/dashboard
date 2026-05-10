@@ -1,18 +1,58 @@
+import axios from 'axios';
 import { pool } from '../config/database';
 import type { ILibraryImpact, ILaboratoryUsage, ISubjectPerformance } from '../types/dashboard';
 
+const ACADEMIC_URL    = process.env.ACADEMIC_URL    || 'http://localhost:3000/api';
+const LIBRARY_URL     = process.env.LIBRARY_URL     || 'http://localhost:4000/api/library';
+const LABORATORIES_URL = process.env.LABORATORIES_URL || 'http://localhost:3002/api/v1/files';
+
+// ── Extract ──────────────────────────────────────────────────────────────────
+
+export const extractAcademic = async () => {
+  const [calificaciones, matriculas, cursos, asignaturas, estudiantes] = await Promise.all([
+    axios.get(`${ACADEMIC_URL}/calificaciones`).then((r) => r.data.data),
+    axios.get(`${ACADEMIC_URL}/matriculas`).then((r) => r.data.data),
+    axios.get(`${ACADEMIC_URL}/cursos`).then((r) => r.data.data),
+    axios.get(`${ACADEMIC_URL}/asignaturas`).then((r) => r.data.data),
+    axios.get(`${ACADEMIC_URL}/estudiantes`).then((r) => r.data.data),
+  ]);
+  return { calificaciones, matriculas, cursos, asignaturas, estudiantes };
+};
+
+export const extractLibrary = async () => {
+  const res = await axios.get(`${LIBRARY_URL}/metricas`);
+  return res.data.data as Array<{
+    numero_documento: string;
+    metricas_globales: {
+      total_prestamos_fisicos: number;
+      total_accesos_bd_cientificas: number;
+      total_descargas_material: number;
+      horas_lectura_acumuladas: number;
+    };
+  }>;
+};
+
+export const extractLaboratories = async () => {
+  const res = await axios.get(`${LABORATORIES_URL}/clean`);
+  return res.data.data as Array<{
+    id_estudiante: string;
+    equipo_utilizado: string;
+    duracion_minutos: number;
+    fecha: string;
+  }>;
+};
+
+// ── Transform & Analytics ────────────────────────────────────────────────────
+
 /**
- * Promedio de notas por asignatura.
- * Fórmula: (seguimiento_1 + seguimiento_2 + seguimiento_3 + nota_final) / 4
+ * Promedio de notas por asignatura usando datos de academic-record (PostgreSQL).
  */
 export const getSubjectPerformance = async (): Promise<ISubjectPerformance[]> => {
   const result = await pool.query<ISubjectPerformance>(`
     SELECT
       a.nombre_asignatura AS asignatura,
-      ROUND(
-        AVG((c.seguimiento_1 + c.seguimiento_2 + c.seguimiento_3 + c.nota_final) / 4.0),
-        2
-      ) AS "promedioNotas"
+      ROUND(AVG((c.seguimiento_1 + c.seguimiento_2 + c.seguimiento_3 + c.nota_final) / 4.0), 2)
+        AS "promedioNotas"
     FROM calificacion c
     JOIN matricula m  ON c.id_matricula = m.id_matricula
     JOIN curso cu     ON m.id_curso = cu.id_curso
@@ -25,8 +65,6 @@ export const getSubjectPerformance = async (): Promise<ISubjectPerformance[]> =>
 
 /**
  * Correlación entre nivel de asistencia y promedio de notas.
- * Clasifica a los estudiantes en Alta / Media / Baja / Sin actividad
- * según su porcentaje de asistencia y calcula el promedio de notas por grupo.
  */
 export const getLibraryImpact = async (): Promise<ILibraryImpact[]> => {
   const result = await pool.query<ILibraryImpact>(`
@@ -55,7 +93,7 @@ export const getLibraryImpact = async (): Promise<ILibraryImpact[]> => {
 };
 
 /**
- * Asistencias registradas por asignatura (proxy de uso de recursos).
+ * Asistencias por asignatura como proxy de uso de recursos.
  */
 export const getLaboratoryUsage = async (): Promise<ILaboratoryUsage[]> => {
   const result = await pool.query<ILaboratoryUsage>(`
