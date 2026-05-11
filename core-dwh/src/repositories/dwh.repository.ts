@@ -56,6 +56,28 @@ export const getLaboratoryUsage = async (): Promise<ILaboratoryUsage[]> => {
   return rows;
 };
 
+export interface ICruceData {
+  id_estudiante: string;
+  total_minutos_lab: number;
+  promedio_notas: number;
+}
+
+/** Cruce: horas en laboratorio vs promedio de notas por estudiante */
+export const getCruceLabNotas = async (): Promise<ICruceData[]> => {
+  const { rows } = await dwhPool.query(`
+    SELECT
+      f.id_estudiante,
+      COALESCE(SUM(l.duracion_minutos), 0) AS total_minutos_lab,
+      ROUND(AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0), 2) AS promedio_notas
+    FROM dwh.fact_academico f
+    LEFT JOIN dwh.fact_uso_laboratorio l ON f.id_estudiante = l.id_estudiante
+    GROUP BY f.id_estudiante
+    HAVING AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0) IS NOT NULL
+    ORDER BY total_minutos_lab DESC
+  `);
+  return rows;
+};
+
 /** KPIs estratégicos */
 export const getKpis = async (): Promise<IKpiData> => {
   const [kpiRes, riesgoRes, recursosRes] = await Promise.all([

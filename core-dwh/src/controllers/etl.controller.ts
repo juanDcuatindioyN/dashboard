@@ -5,7 +5,6 @@ import type { IDashboardData } from '../types/dashboard';
 
 /**
  * GET /api/etl/dashboard
- * Retorna los datos consolidados desde el DWH (schema dwh).
  */
 export const getDashboardData = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -17,16 +16,21 @@ export const getDashboardData = async (req: Request, res: Response, next: NextFu
     ]);
 
     const data: IDashboardData & { kpis: typeof kpis } = {
-      libraryImpact,
-      subjectPerformance,
-      laboratoryUsage,
-      kpis,
+      libraryImpact, subjectPerformance, laboratoryUsage, kpis,
     };
-
     res.status(200).json({ success: true, data });
-  } catch (error) {
-    next(error);
-  }
+  } catch (error) { next(error); }
+};
+
+/**
+ * GET /api/etl/cruce
+ * Retorna horas en laboratorio vs promedio de notas por estudiante.
+ */
+export const getCruceLabNotas = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await dwhRepository.getCruceLabNotas();
+    res.status(200).json({ success: true, data });
+  } catch (error) { next(error); }
 };
 
 /**
