@@ -13,10 +13,19 @@ export interface ILaboratoryUsage {
     horasUso: string | number;
 }
 
+// KPIs from the DWH (returned by core-dwh)
+export interface IKpiData {
+    promedioGeneral: number;
+    totalEstudiantes: number;
+    estudiantesEnRiesgo: number;
+    tasaUtilizacionRecursos: number;
+}
+
 export interface IDashboardData {
     libraryImpact: ILibraryImpact[];
     subjectPerformance: ISubjectPerformance[];
     laboratoryUsage: ILaboratoryUsage[];
+    kpis?: IKpiData;
 }
 
 export interface IDashboardResponse {
@@ -24,10 +33,10 @@ export interface IDashboardResponse {
     data: IDashboardData;
 }
 
-// Derived KPIs computed on the frontend
+// Derived KPIs computed on the frontend (fallback if DWH kpis not available)
 export interface IKpis {
     promedioGeneral: number;
     totalAsignaturas: number;
-    asignaturasEnRiesgo: number;   // promedio < 3.5
-    asignaturasDestacadas: number; // promedio >= 4.0
+    asignaturasEnRiesgo: number;
+    asignaturasDestacadas: number;
 }

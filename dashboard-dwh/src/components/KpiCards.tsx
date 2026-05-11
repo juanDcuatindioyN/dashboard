@@ -1,8 +1,8 @@
-import { TrendingUp, TrendingDown, BookOpen, AlertTriangle, Star } from 'lucide-react';
-import type { IKpis } from '../types/dashboard';
+import { TrendingUp, Users, AlertTriangle, Activity } from 'lucide-react';
+import type { IKpiData } from '../types/dashboard';
 
 interface Props {
-    kpis: IKpis;
+    kpis: IKpiData;
 }
 
 interface CardProps {
@@ -31,35 +31,35 @@ export const KpiCards = ({ kpis }: Props) => (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card
             title="Promedio General"
-            value={kpis.promedioGeneral.toFixed(2)}
-            subtitle="Sobre escala de 5.0"
+            value={Number(kpis.promedioGeneral).toFixed(2)}
+            subtitle="Promedio ponderado del programa"
             icon={<TrendingUp className="w-5 h-5" />}
             color="text-primary"
             bg="bg-indigo-500/10"
         />
         <Card
-            title="Asignaturas"
-            value={kpis.totalAsignaturas}
-            subtitle="En el programa"
-            icon={<BookOpen className="w-5 h-5" />}
+            title="Total Estudiantes"
+            value={kpis.totalEstudiantes}
+            subtitle="Registrados en el DWH"
+            icon={<Users className="w-5 h-5" />}
             color="text-secondary"
             bg="bg-cyan-500/10"
         />
         <Card
             title="En Riesgo"
-            value={kpis.asignaturasEnRiesgo}
+            value={kpis.estudiantesEnRiesgo}
             subtitle="Promedio menor a 3.5"
             icon={<AlertTriangle className="w-5 h-5" />}
             color="text-danger"
             bg="bg-red-500/10"
         />
         <Card
-            title="Destacadas"
-            value={kpis.asignaturasDestacadas}
-            subtitle="Promedio mayor a 4.0"
-            icon={<Star className="w-5 h-5" />}
-            color="text-warning"
-            bg="bg-yellow-500/10"
+            title="Uso de Recursos"
+            value={`${kpis.tasaUtilizacionRecursos}%`}
+            subtitle="Tasa de utilización biblioteca/lab"
+            icon={<Activity className="w-5 h-5" />}
+            color="text-success"
+            bg="bg-emerald-500/10"
         />
     </div>
 );

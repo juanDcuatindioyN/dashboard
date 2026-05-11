@@ -6,17 +6,13 @@ import { GradeDistributionChart } from './charts/GradeDistributionChart';
 import { SubjectPerformanceChart } from './charts/SubjectPerformanceChart';
 import { SyncButton } from './SyncButton';
 import { AlertCircle, BarChart2 } from 'lucide-react';
-import type { IKpis } from '../types/dashboard';
+import type { IKpiData } from '../types/dashboard';
 
-const computeKpis = (data: ReturnType<typeof useDashboardStore.getState>['dashboardData']): IKpis => {
-    if (!data) return { promedioGeneral: 0, totalAsignaturas: 0, asignaturasEnRiesgo: 0, asignaturasDestacadas: 0 };
-    const notas = data.subjectPerformance.map(d => Number(d.promedioNotas));
-    return {
-        promedioGeneral:      notas.reduce((a, b) => a + b, 0) / (notas.length || 1),
-        totalAsignaturas:     notas.length,
-        asignaturasEnRiesgo:  notas.filter(n => n < 3.5).length,
-        asignaturasDestacadas: notas.filter(n => n >= 4.0).length,
-    };
+const FALLBACK_KPIS: IKpiData = {
+    promedioGeneral: 0,
+    totalEstudiantes: 0,
+    estudiantesEnRiesgo: 0,
+    tasaUtilizacionRecursos: 0,
 };
 
 export const DashboardView = () => {
@@ -34,7 +30,7 @@ export const DashboardView = () => {
                     ))}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {[...Array(4)].map((_, i) => (
+                    {[...Array(3)].map((_, i) => (
                         <div key={i} className="h-72 bg-surface animate-pulse rounded-2xl border border-border" />
                     ))}
                 </div>
@@ -61,7 +57,7 @@ export const DashboardView = () => {
         );
     }
 
-    const kpis = computeKpis(dashboardData);
+    const kpis: IKpiData = dashboardData?.kpis ?? FALLBACK_KPIS;
 
     return (
         <div className="flex flex-col gap-6">
@@ -85,7 +81,7 @@ export const DashboardView = () => {
                 </div>
             ) : (
                 <>
-                    {/* KPI Cards */}
+                    {/* KPI Cards — datos reales del DWH */}
                     <KpiCards kpis={kpis} />
 
                     {/* Charts grid */}
