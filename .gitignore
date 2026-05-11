@@ -16,6 +16,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# Presentation notes (local only)
+EXPOSICION.md
+
 # CSV data zones — track folder structure but not the files
 backend-laboratories/data/raw/*
 backend-laboratories/data/clean/*
