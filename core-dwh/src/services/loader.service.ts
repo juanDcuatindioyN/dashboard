@@ -51,6 +51,7 @@ async function loadDimEstudiante(libraryData: any[]) {
     d.metricas_globales
   ]));
 
+  // Load students from PostgreSQL
   const { rows } = await pool.query(
     'SELECT numero_documento, tipo_documento, nombres, apellidos, correo_institucional, semestre_actual FROM estudiante'
   );
@@ -58,12 +59,23 @@ async function loadDimEstudiante(libraryData: any[]) {
   for (const e of rows) {
     const id = normalizeId(e.numero_documento);
     const metricas = libMap.get(id);
-    const total = metricas
-      ? (metricas.total_prestamos_fisicos || 0) +
-        (metricas.total_accesos_bd_cientificas || 0) +
-        (metricas.total_descargas_material || 0)
-      : 0;
-    const nivel = total === 0 ? 'Sin actividad' : total <= 3 ? 'Baja' : total <= 7 ? 'Media' : 'Alta';
+
+    // Use nivel_actividad directly if available, otherwise calculate from totals
+    let nivel = 'Sin actividad';
+    if (metricas) {
+      if (metricas.nivel_actividad) {
+        const raw = String(metricas.nivel_actividad).toLowerCase();
+        if (raw === 'alto' || raw === 'alta')        nivel = 'Alta';
+        else if (raw === 'medio' || raw === 'media') nivel = 'Media';
+        else if (raw === 'bajo' || raw === 'baja')   nivel = 'Baja';
+        else nivel = 'Sin actividad';
+      } else {
+        const total = (metricas.total_prestamos_fisicos || 0) +
+                      (metricas.total_accesos_bd_cientificas || 0) +
+                      (metricas.total_descargas_material || 0);
+        nivel = total === 0 ? 'Sin actividad' : total <= 3 ? 'Baja' : total <= 7 ? 'Media' : 'Alta';
+      }
+    }
 
     await dwhPool.query(`
       INSERT INTO dwh.dim_estudiante
@@ -73,7 +85,28 @@ async function loadDimEstudiante(libraryData: any[]) {
         nivel_actividad_biblioteca = EXCLUDED.nivel_actividad_biblioteca
     `, [id, e.tipo_documento, e.nombres, e.apellidos, e.correo_institucional, e.semestre_actual, nivel]);
   }
-  console.log(`[loader] dim_estudiante: ${rows.length} students`);
+
+  // Also insert MongoDB-only students so fact_uso_biblioteca can reference them
+  for (const doc of libraryData) {
+    const id = normalizeId(doc.numero_documento);
+    const metricas = doc.metricas_globales || {};
+    let nivel = 'Sin actividad';
+    if (metricas.nivel_actividad) {
+      const raw = String(metricas.nivel_actividad).toLowerCase();
+      if (raw === 'alto' || raw === 'alta')        nivel = 'Alta';
+      else if (raw === 'medio' || raw === 'media') nivel = 'Media';
+      else if (raw === 'bajo' || raw === 'baja')   nivel = 'Baja';
+    }
+    await dwhPool.query(`
+      INSERT INTO dwh.dim_estudiante
+        (id_estudiante, tipo_documento, nombres, apellidos, correo_institucional, semestre_actual, nivel_actividad_biblioteca)
+      VALUES ($1,'CC',$2,$3,'',$4,$5)
+      ON CONFLICT (id_estudiante) DO UPDATE SET
+        nivel_actividad_biblioteca = EXCLUDED.nivel_actividad_biblioteca
+    `, [id, doc.nombre_estudiante || '', '', 0, nivel]);
+  }
+
+  console.log(`[loader] dim_estudiante: ${rows.length} from PostgreSQL + ${libraryData.length} from MongoDB`);
 }
 
 // ── Step 3: Load dim_asignatura ──────────────────────────────────────────────
@@ -161,9 +194,14 @@ async function loadFactAcademico() {
 // ── Step 6: Load fact_uso_biblioteca ────────────────────────────────────────
 
 async function loadFactUsoBiblioteca(libraryData: any[]) {
+  // Get valid student IDs from DWH to avoid FK violations
+  const { rows: validStudents } = await dwhPool.query('SELECT id_estudiante FROM dwh.dim_estudiante');
+  const validIds = new Set(validStudents.map((r: any) => r.id_estudiante));
+
   let count = 0;
   for (const doc of libraryData) {
     const id = normalizeId(doc.numero_documento);
+    if (!validIds.has(id)) continue; // skip if student not in DWH
 
     for (const p of (doc.historial_prestamos_fisicos || [])) {
       const fecha = normalizeDate(p.fecha_prestamo || p.fecha || '2025-08-01');
@@ -177,7 +215,7 @@ async function loadFactUsoBiblioteca(libraryData: any[]) {
         INSERT INTO dwh.fact_uso_biblioteca
           (id_estudiante, id_fecha, tipo_interaccion, recurso_id, cantidad_articulos, horas_lectura_acumuladas)
         VALUES ($1,$2,'prestamo_fisico',$3,1,0)
-      `, [id, fecha, p.id_prestamo || p.titulo_recurso || 'N/A']);
+      `, [id, fecha, p.id_prestamo || p.titulo_recurso || p.id_libro || 'N/A']);
       count++;
     }
 
@@ -193,8 +231,24 @@ async function loadFactUsoBiblioteca(libraryData: any[]) {
         INSERT INTO dwh.fact_uso_biblioteca
           (id_estudiante, id_fecha, tipo_interaccion, recurso_id, cantidad_articulos, horas_lectura_acumuladas)
         VALUES ($1,$2,'acceso_bd',$3,$4,$5)
-      `, [id, fecha, a.nombre_base || 'N/A', a.articulos_consultados || 0,
-          (a.duracion_minutos || 0) / 60]);
+      `, [id, fecha, a.nombre_base || a.plataforma || 'N/A',
+          a.articulos_consultados || 0, (a.duracion_minutos || 0) / 60]);
+      count++;
+    }
+
+    for (const d of (doc.descargas_material_estudio || [])) {
+      const fecha = normalizeDate(d.fecha_descarga || '2025-08-01');
+      await dwhPool.query(`
+        INSERT INTO dwh.dim_tiempo (id_fecha, anio, mes, dia, dia_semana, periodo_academico)
+        VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING
+      `, [fecha, new Date(fecha).getFullYear(), new Date(fecha).getMonth()+1,
+          new Date(fecha).getDate(), 'Lunes', toPeriodo(fecha)]);
+
+      await dwhPool.query(`
+        INSERT INTO dwh.fact_uso_biblioteca
+          (id_estudiante, id_fecha, tipo_interaccion, recurso_id, cantidad_articulos, horas_lectura_acumuladas)
+        VALUES ($1,$2,'descarga',$3,1,0)
+      `, [id, fecha, d.recurso_id || 'N/A']);
       count++;
     }
   }

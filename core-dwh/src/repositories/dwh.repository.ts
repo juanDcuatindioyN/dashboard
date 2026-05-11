@@ -25,17 +25,21 @@ export const getSubjectPerformance = async (): Promise<ISubjectPerformance[]> =>
 
 /** Correlación nivel actividad biblioteca vs promedio notas */
 export const getLibraryImpact = async (): Promise<ILibraryImpact[]> => {
+  // Count students per activity level from dim_estudiante (populated from MongoDB)
   const { rows } = await dwhPool.query(`
     SELECT
-      e.nivel_actividad_biblioteca AS "nivelActividad",
-      ROUND(AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0), 2)
-        AS "promedioNotas"
-    FROM dwh.fact_academico f
-    JOIN dwh.dim_estudiante e ON f.id_estudiante = e.id_estudiante
-    GROUP BY e.nivel_actividad_biblioteca
-    ORDER BY "promedioNotas" DESC
+      nivel_actividad_biblioteca AS "nivelActividad",
+      COUNT(*) AS "totalEstudiantes"
+    FROM dwh.dim_estudiante
+    GROUP BY nivel_actividad_biblioteca
+    ORDER BY "totalEstudiantes" DESC
   `);
-  return rows;
+
+  // Map to ILibraryImpact using student count as the metric
+  return rows.map(r => ({
+    nivelActividad: r.nivelActividad,
+    promedioNotas: Number(r.totalEstudiantes),
+  }));
 };
 
 /** Horas de uso por equipo de laboratorio */
