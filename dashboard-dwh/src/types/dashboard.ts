@@ -32,11 +32,3 @@ export interface IDashboardResponse {
     success: boolean;
     data: IDashboardData;
 }
-
-// Derived KPIs computed on the frontend (fallback if DWH kpis not available)
-export interface IKpis {
-    promedioGeneral: number;
-    totalAsignaturas: number;
-    asignaturasEnRiesgo: number;
-    asignaturasDestacadas: number;
-}

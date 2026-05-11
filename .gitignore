@@ -16,7 +16,10 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# CSV data zones (runtime files, not source)
-backend-laboratories/data/raw/
-backend-laboratories/data/clean/
-backend-laboratories/data/error/
+# CSV data zones — track folder structure but not the files
+backend-laboratories/data/raw/*
+backend-laboratories/data/clean/*
+backend-laboratories/data/error/*
+!backend-laboratories/data/raw/.gitkeep
+!backend-laboratories/data/clean/.gitkeep
+!backend-laboratories/data/error/.gitkeep
