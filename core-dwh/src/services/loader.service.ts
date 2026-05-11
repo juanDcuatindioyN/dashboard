@@ -54,7 +54,7 @@ async function loadDimTiempo(dates: string[]) {
   }
 
   await dwhPool.query(`
-    INSERT INTO dwh.dim_tiempo (id_fecha, anio, mes, dia, dia_semana, periodo_academico)
+    INSERT INTO umariana_dwh.dim_tiempo (id_fecha, anio, mes, dia, dia_semana, periodo_academico)
     SELECT * FROM UNNEST($1::date[], $2::int[], $3::int[], $4::int[], $5::text[], $6::text[])
     ON CONFLICT (id_fecha) DO NOTHING
   `, [fechas, anios, meses, dias, diasSemana, periodos]);
@@ -94,7 +94,7 @@ async function loadDimEstudiante(libraryData: any[]) {
   }
 
   await dwhPool.query(`
-    INSERT INTO dwh.dim_estudiante
+    INSERT INTO umariana_dwh.dim_estudiante
       (id_estudiante, tipo_documento, nombres, apellidos, correo_institucional, semestre_actual, nivel_actividad_biblioteca)
     SELECT * FROM UNNEST($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::int[], $7::text[])
     ON CONFLICT (id_estudiante) DO UPDATE SET nivel_actividad_biblioteca = EXCLUDED.nivel_actividad_biblioteca
@@ -111,7 +111,7 @@ async function loadDimEstudiante(libraryData: any[]) {
 
   if (mIds.length) {
     await dwhPool.query(`
-      INSERT INTO dwh.dim_estudiante
+      INSERT INTO umariana_dwh.dim_estudiante
         (id_estudiante, tipo_documento, nombres, apellidos, correo_institucional, semestre_actual, nivel_actividad_biblioteca)
       SELECT id, 'CC', nom, '', '', 0, niv
       FROM UNNEST($1::text[], $2::text[], $3::text[]) AS t(id, nom, niv)
@@ -134,7 +134,7 @@ async function loadDimAsignatura() {
   const semestres = rows.map(r => r.semestre_plan);
 
   await dwhPool.query(`
-    INSERT INTO dwh.dim_asignatura (codigo_asignatura, nombre_asignatura, creditos, semestre_plan)
+    INSERT INTO umariana_dwh.dim_asignatura (codigo_asignatura, nombre_asignatura, creditos, semestre_plan)
     SELECT * FROM UNNEST($1::text[], $2::text[], $3::int[], $4::int[])
     ON CONFLICT (codigo_asignatura) DO NOTHING
   `, [codigos, nombres, creditos, semestres]);
@@ -149,7 +149,7 @@ async function loadDimEquipoLab(labRecords: any[]) {
   if (!equipos.length) return;
 
   await dwhPool.query(`
-    INSERT INTO dwh.dim_equipo_lab (descripcion_equipo)
+    INSERT INTO umariana_dwh.dim_equipo_lab (descripcion_equipo)
     SELECT UNNEST($1::text[])
     ON CONFLICT (descripcion_equipo) DO NOTHING
   `, [equipos]);
@@ -175,7 +175,7 @@ async function loadFactAcademico() {
 
   const refDate = '2025-08-01';
   await dwhPool.query(`
-    INSERT INTO dwh.dim_tiempo (id_fecha, anio, mes, dia, dia_semana, periodo_academico)
+    INSERT INTO umariana_dwh.dim_tiempo (id_fecha, anio, mes, dia, dia_semana, periodo_academico)
     VALUES ($1,2025,8,1,'Viernes','2025-2') ON CONFLICT DO NOTHING
   `, [refDate]);
 
@@ -202,7 +202,7 @@ async function loadFactAcademico() {
   }
 
   await dwhPool.query(`
-    INSERT INTO dwh.fact_academico
+    INSERT INTO umariana_dwh.fact_academico
       (id_estudiante, codigo_asignatura, id_fecha, id_curso, docente_asignado,
        asistio, nota_seguimiento_1, nota_seguimiento_2, nota_seguimiento_3, nota_final)
     SELECT * FROM UNNEST($1::text[], $2::text[], $3::date[], $4::int[], $5::text[],
@@ -215,7 +215,7 @@ async function loadFactAcademico() {
 // ── Step 6: Load fact_uso_biblioteca (batch) ─────────────────────────────────
 
 async function loadFactUsoBiblioteca(libraryData: any[]) {
-  const { rows: validStudents } = await dwhPool.query('SELECT id_estudiante FROM dwh.dim_estudiante');
+  const { rows: validStudents } = await dwhPool.query('SELECT id_estudiante FROM umariana_dwh.dim_estudiante');
   const validIds = new Set(validStudents.map((r: any) => r.id_estudiante));
 
   const estIds: string[] = [], fechas: string[] = [], tipos: string[] = [],
@@ -250,7 +250,7 @@ async function loadFactUsoBiblioteca(libraryData: any[]) {
     await loadDimTiempo(fechas);
 
     await dwhPool.query(`
-      INSERT INTO dwh.fact_uso_biblioteca
+      INSERT INTO umariana_dwh.fact_uso_biblioteca
         (id_estudiante, id_fecha, tipo_interaccion, recurso_id, cantidad_articulos, horas_lectura_acumuladas)
       SELECT * FROM UNNEST($1::text[], $2::date[], $3::text[], $4::text[], $5::int[], $6::numeric[])
     `, [estIds, fechas, tipos, recursos, cantidades, horas]);
@@ -262,7 +262,7 @@ async function loadFactUsoBiblioteca(libraryData: any[]) {
 // ── Step 7: Load fact_uso_laboratorio (batch) ────────────────────────────────
 
 async function loadFactUsoLaboratorio(labRecords: any[]) {
-  const { rows: equipos } = await dwhPool.query('SELECT id_equipo, descripcion_equipo FROM dwh.dim_equipo_lab');
+  const { rows: equipos } = await dwhPool.query('SELECT id_equipo, descripcion_equipo FROM umariana_dwh.dim_equipo_lab');
   const equipoMap = new Map(equipos.map(e => [e.descripcion_equipo, e.id_equipo]));
 
   const estIds: string[] = [], eqIds: number[] = [], fechas: string[] = [],
@@ -281,7 +281,7 @@ async function loadFactUsoLaboratorio(labRecords: any[]) {
 
   if (estIds.length) {
     await dwhPool.query(`
-      INSERT INTO dwh.fact_uso_laboratorio
+      INSERT INTO umariana_dwh.fact_uso_laboratorio
         (id_estudiante, id_equipo, id_fecha, hora_entrada, hora_salida, duracion_minutos)
       SELECT * FROM UNNEST($1::text[], $2::int[], $3::date[], $4::time[], $5::time[], $6::int[])
     `, [estIds, eqIds, fechas, entradas, salidas, duraciones]);
@@ -309,7 +309,7 @@ export const runFullEtl = async (): Promise<{ success: boolean; report: Record<s
     await loadDimEstudiante(libraryRes);
     await loadDimEquipoLab(labRes);
 
-    await dwhPool.query('TRUNCATE dwh.fact_academico, dwh.fact_uso_biblioteca, dwh.fact_uso_laboratorio RESTART IDENTITY CASCADE');
+    await dwhPool.query('TRUNCATE umariana_dwh.fact_academico, umariana_dwh.fact_uso_biblioteca, umariana_dwh.fact_uso_laboratorio RESTART IDENTITY CASCADE');
 
     await loadFactAcademico();
     if (libraryRes.length) await loadFactUsoBiblioteca(libraryRes);

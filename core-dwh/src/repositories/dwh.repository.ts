@@ -15,8 +15,8 @@ export const getSubjectPerformance = async (): Promise<ISubjectPerformance[]> =>
       a.nombre_asignatura AS asignatura,
       ROUND(AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0), 2)
         AS "promedioNotas"
-    FROM dwh.fact_academico f
-    JOIN dwh.dim_asignatura a ON f.codigo_asignatura = a.codigo_asignatura
+    FROM umariana_dwh.fact_academico f
+    JOIN umariana_dwh.dim_asignatura a ON f.codigo_asignatura = a.codigo_asignatura
     GROUP BY a.nombre_asignatura
     ORDER BY "promedioNotas" DESC
   `);
@@ -30,7 +30,7 @@ export const getLibraryImpact = async (): Promise<ILibraryImpact[]> => {
     SELECT
       nivel_actividad_biblioteca AS "nivelActividad",
       COUNT(*) AS "totalEstudiantes"
-    FROM dwh.dim_estudiante
+    FROM umariana_dwh.dim_estudiante
     GROUP BY nivel_actividad_biblioteca
     ORDER BY "totalEstudiantes" DESC
   `);
@@ -48,8 +48,8 @@ export const getLaboratoryUsage = async (): Promise<ILaboratoryUsage[]> => {
     SELECT
       eq.descripcion_equipo AS equipo,
       SUM(f.duracion_minutos) AS "horasUso"
-    FROM dwh.fact_uso_laboratorio f
-    JOIN dwh.dim_equipo_lab eq ON f.id_equipo = eq.id_equipo
+    FROM umariana_dwh.fact_uso_laboratorio f
+    JOIN umariana_dwh.dim_equipo_lab eq ON f.id_equipo = eq.id_equipo
     GROUP BY eq.descripcion_equipo
     ORDER BY "horasUso" DESC
   `);
@@ -69,8 +69,8 @@ export const getCruceLabNotas = async (): Promise<ICruceData[]> => {
       f.id_estudiante,
       COALESCE(SUM(l.duracion_minutos), 0) AS total_minutos_lab,
       ROUND(AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0), 2) AS promedio_notas
-    FROM dwh.fact_academico f
-    LEFT JOIN dwh.fact_uso_laboratorio l ON f.id_estudiante = l.id_estudiante
+    FROM umariana_dwh.fact_academico f
+    LEFT JOIN umariana_dwh.fact_uso_laboratorio l ON f.id_estudiante = l.id_estudiante
     GROUP BY f.id_estudiante
     HAVING AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0) IS NOT NULL
     ORDER BY total_minutos_lab DESC
@@ -85,18 +85,18 @@ export const getKpis = async (): Promise<IKpiData> => {
       SELECT
         ROUND(AVG((f.nota_seguimiento_1 + f.nota_seguimiento_2 + f.nota_seguimiento_3 + f.nota_final) / 4.0), 2) AS promedio,
         COUNT(DISTINCT f.id_estudiante) AS total_estudiantes
-      FROM dwh.fact_academico f
+      FROM umariana_dwh.fact_academico f
     `),
     dwhPool.query(`
       SELECT COUNT(DISTINCT id_estudiante) AS en_riesgo
-      FROM dwh.fact_academico
+      FROM umariana_dwh.fact_academico
       WHERE (nota_seguimiento_1 + nota_seguimiento_2 + nota_seguimiento_3 + nota_final) / 4.0 < 3.5
     `),
     dwhPool.query(`
       SELECT
-        (SELECT COUNT(DISTINCT id_estudiante) FROM dwh.fact_uso_biblioteca) +
-        (SELECT COUNT(DISTINCT id_estudiante) FROM dwh.fact_uso_laboratorio) AS usaron_recursos,
-        (SELECT COUNT(*) FROM dwh.dim_estudiante) AS total
+        (SELECT COUNT(DISTINCT id_estudiante) FROM umariana_dwh.fact_uso_biblioteca) +
+        (SELECT COUNT(DISTINCT id_estudiante) FROM umariana_dwh.fact_uso_laboratorio) AS usaron_recursos,
+        (SELECT COUNT(*) FROM umariana_dwh.dim_estudiante) AS total
     `),
   ]);
 

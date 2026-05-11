@@ -1,6 +1,6 @@
 /**
  * create-dwh.js
- * Crea el schema 'dwh' con las tablas de hechos y dimensiones.
+ * Crea el schema 'umariana_dwh' con las tablas de hechos y dimensiones.
  * Ejecutar una sola vez: node scripts/create-dwh.js
  */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
@@ -10,7 +10,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const SQL = `
 -- ── Schema ────────────────────────────────────────────────────────────────────
-CREATE SCHEMA IF NOT EXISTS dwh;
+CREATE SCHEMA IF NOT EXISTS umariana_dwh;
 
 -- ── Dimensiones ───────────────────────────────────────────────────────────────
 
@@ -91,7 +91,7 @@ async function main() {
     // Verify
     const res = await pool.query(`
       SELECT table_name FROM information_schema.tables
-      WHERE table_schema = 'dwh' ORDER BY table_name
+      WHERE table_schema = 'umariana_dwh' ORDER BY table_name
     `);
     console.log('Tables created:', res.rows.map(r => r.table_name).join(', '));
   } catch (err) {
