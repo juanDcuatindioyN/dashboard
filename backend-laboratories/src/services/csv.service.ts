@@ -103,8 +103,13 @@ export const processRawFiles = (): { processed: string[]; errors: string[] } => 
         };
       });
 
-      const cleanPath = path.join(CLEAN_DIR, file.replace('.csv', '.json'));
-      fs.writeFileSync(cleanPath, JSON.stringify(cleaned, null, 2));
+      // Save clean file as CSV (not JSON)
+      const csvHeader = 'id_estudiante,semestre,fecha,hora_entrada,hora_salida,equipo_utilizado,duracion_minutos';
+      const csvRows = cleaned.map(r =>
+        `${r.id_estudiante},${r.semestre},${r.fecha},${r.hora_entrada},${r.hora_salida},${r.equipo_utilizado},${r.duracion_minutos}`
+      );
+      const cleanPath = path.join(CLEAN_DIR, file); // keep .csv extension
+      fs.writeFileSync(cleanPath, [csvHeader, ...csvRows].join('\n'));
       fs.unlinkSync(rawPath);
       processed.push(file);
     } catch (err) {
@@ -119,11 +124,15 @@ export const processRawFiles = (): { processed: string[]; errors: string[] } => 
 
 /** Retorna todos los registros limpios como array */
 export const getCleanRecords = (): LabRecord[] => {
-  const files = fs.readdirSync(CLEAN_DIR).filter((f) => f.endsWith('.json'));
+  const files = fs.readdirSync(CLEAN_DIR).filter((f) => f.endsWith('.csv'));
   const all: LabRecord[] = [];
   for (const file of files) {
     const content = fs.readFileSync(path.join(CLEAN_DIR, file), 'utf-8');
-    all.push(...JSON.parse(content));
+    const rows = parse(content, { columns: true, skip_empty_lines: true, trim: true });
+    all.push(...rows.map((r: any) => ({
+      ...r,
+      duracion_minutos: Number(r.duracion_minutos),
+    })));
   }
   return all;
 };
