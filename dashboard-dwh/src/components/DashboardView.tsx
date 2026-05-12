@@ -4,7 +4,6 @@ import { KpiCards } from './KpiCards';
 import { TopSubjectsChart } from './charts/TopSubjectsChart';
 import { GradeDistributionChart } from './charts/GradeDistributionChart';
 import { SubjectPerformanceChart } from './charts/SubjectPerformanceChart';
-import { LibraryActivityChart } from './charts/LibraryActivityChart';
 import { ScatterLabNotasChart } from './charts/ScatterLabNotasChart';
 import { SyncButton } from './SyncButton';
 import { AlertCircle, BarChart2 } from 'lucide-react';
@@ -98,11 +97,6 @@ export const DashboardView = () => {
 
                         {/* Distribución de notas */}
                         <GradeDistributionChart data={dashboardData.subjectPerformance} />
-
-                        {/* Actividad de biblioteca desde MongoDB */}
-                        <div className="lg:col-span-2">
-                            <LibraryActivityChart data={dashboardData.libraryImpact} />
-                        </div>
 
                         {/* Dispersion: horas laboratorio vs notas */}
                         <ScatterLabNotasChart />
